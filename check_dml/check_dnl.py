@@ -23,7 +23,8 @@ class WinGUI(Tk):
         # 定义第一个容器，使用 labelanchor ='w' 来设置标题的方位
         frame_left = LabelFrame(self, text="请选择")
         # 使用 place 控制 LabelFrame 的位置
-        frame_left.place(relx=0, rely=0, relwidth=1)
+        # frame_left.place(relx=0, rely=0, relwidth=1)
+        frame_left.pack(side=TOP,fill=X)
 
         frame_left.grid_columnconfigure(0,weight=2)
         frame_left.grid_rowconfigure(0,weight=1)
@@ -33,6 +34,10 @@ class WinGUI(Tk):
         frame_left.grid_rowconfigure(2, weight=1)
         # frame_left.grid_columnconfigure(3, weight=1)
         frame_left.grid_rowconfigure(3, weight=1)
+        self.frame_left2 = LabelFrame(self, text="内容")
+        # 使用 place 控制 LabelFrame 的位置
+        # frame_left2.place(relx=0, rely=0, relwidth=1)
+        self.frame_left2.pack(side=TOP, fill=BOTH)
 
 
         '''第一组'''
@@ -73,9 +78,23 @@ class WinGUI(Tk):
         # self.tk_button_but_cle = self.__tk_button_but_cle(frame_left)
         btn_reset = Button(frame_left, text="重置",command=self.but_reset)
         btn_reset.grid(column=2, row=2, padx=(5, 5), pady=(10, 10), ipady=8)
-        '''选项卡'''
-        # 选项卡
-        self.tk_tabs_tab_main = Frame_tab_main(self)
+        '''内容'''
+        # 内容
+        self.treev_con = Treeview(self.frame_left2,columns=("dir","file_name","sql_con"),show='headings',height=2)
+
+        self.treev_con.heading("dir", text="地址")  # 图标栏
+        self.treev_con.heading("file_name", text="文件名")
+        self.treev_con.heading("sql_con", text="sql数量")
+
+        self.treev_con.column("dir",anchor=CENTER)
+        self.treev_con.column("file_name", anchor=CENTER)
+        self.treev_con.column("sql_con", anchor=CENTER)
+
+        self.treev_con.tag_configure("evenColor", background="lightblue")  # 设置标签
+        self.treev_con.pack(fill=BOTH)
+
+
+
 
     def select_folder_dml(self):
         # 文件夹选择
@@ -93,9 +112,21 @@ class WinGUI(Tk):
         v_ipt_log = self.ipt_logs.get()
         v_ipt_dml = self.ipt_dml.get()
         if os.path.isdir(v_ipt_log) and os.path.isdir(v_ipt_dml):
-            ls_dir_dml = self._dir_or_file(v_ipt_dml)
-            ls_dir_log = self._dir_or_file(v_ipt_log)
-            print(ls_dir_dml,ls_dir_dml)
+            data = self._dir_or_file(v_ipt_dml)
+            # data = {"文件名":ls_dir_dml[1],"路径":ls_dir_dml[0]}
+            # print(ls_dir_dml[1])
+            # # print(type(len(data)))
+            rowCount = 1
+            for i_data in range(len(data)):
+                if (rowCount % 2 == 1):
+                    self.treev_con.insert("", index=END, text="文件名", values=(data[i_data]))
+                    # print((ls_dir_dml[1])[i_data])
+                else:
+                    self.treev_con.insert("", index=END, text="文件名", values=(data[i_data]),tags=("evenColor"))  # 建立浅蓝色底
+                    # print((ls_dir_dml[1])[i_data])
+                rowCount += 1  # 行号数加1
+
+            self.treev_con.pack(fill=BOTH)
 
         else:
             # message = "输入有误,这不是文件夹"
@@ -105,49 +136,59 @@ class WinGUI(Tk):
 
     def  _dir_or_file(self,fpath):
         """判断参数是文件还是路径，路径的话遍历路径经将文件路径记录到列表"""
-        self.file_paths = []
+        file_sql_info_ls = []
         for dirpath, dirnames, filenames in os.walk(fpath):
             for filename in filenames:
                 file_path = os.path.join(dirpath, filename)
-                self.file_paths.append(file_path)
-        return self.file_paths
+                # file_paths.append(file_path)
+                # file_name_ls.append(filename)
+                list_tmp = []
+                sql_list = self.readsql_from_file(self, file_path, filename)
+                list_tmp.append(filename)
+                list_tmp.append(file_path)
+                list_tmp.append(str(len(sql_list)))
+                file_sql_info_ls.append(list_tmp)
+        return file_sql_info_ls
+
+    def readsql_from_file(self, file_path, filename):
+        try:
+            print("sql文件%s，开始内容转化" % (file_path))
+            fp = open(file_path, 'r', encoding='utf-8')
+            sql_str = fp.readlines()
+            # results_list = sql_str.split(";")
+            results, results_list = [], []
+            ##去除\n\r
+            if sql_str[-1].endswith(";"):
+                sql_str[-1] = sql_str[-1] + "\n"
+            for sql in sql_str:
+                if sql.startswith("\n") or sql == "\r":
+                    continue
+                if sql.startswith("--"):
+                    continue
+                if not sql.startswith("--") and not sql.endswith("--"):
+                    if not sql.startswith("/*"):
+                        results.append(sql)
+
+            trmp_res_sql_list, res_sql_list = [], []
+            while len(results) > 0:
+                for i in range(len(results)):
+                    if results[i].endswith(";\n"):
+                        tem_str = "".join(results[:i + 1])
+                        trmp_res_sql_list.append(tem_str)
+                        del results[:i + 1]
+                        break
+            for i in trmp_res_sql_list:
+                if i.endswith(";\n"):
+                    i = i.strip()
+                    i = i[::-1].replace(";", "", 1)[::-1]
+                    res_sql_list.append(i)
+            print("sql文件%s，内容转化成功，转化待执行sql共%s条" % (file_path, str(len(res_sql_list))))
+            return res_sql_list
+        except Exception as ex:
+            print("ERROR,sql文件%s，内容转化失败，失败信息%s" % (file_path, str(ex)))
+            return None
 
 
-
-class Frame_tab_main(Notebook):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.__frame()
-
-    def __frame(self):
-        self.tk_tabs_tab_main_0 = Frame_tab_main_0(self)
-        self.add(self.tk_tabs_tab_main_0, text="选项卡1")
-
-        self.tk_tabs_tab_main_1 = Frame_tab_main_1(self)
-        self.add(self.tk_tabs_tab_main_1, text="选项卡2")
-
-        # self.place(x=19, y=130, width=561, height=361)
-        # self.place(x=19, y=330, width=561, height=361)
-        self.pack(side="bottom", fill=BOTH)
-
-
-class Frame_tab_main_0(Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.__frame()
-
-    def __frame(self):
-        # self.place(x=19, y=123, width=561, height=361)
-        self.pack(side="bottom", fill=BOTH)
-
-class Frame_tab_main_1(Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.__frame()
-
-    def __frame(self):
-        # self.place(x=19, y=123, width=561, height=361)
-        self.pack(side="bottom", fill=BOTH)
 
 
 
