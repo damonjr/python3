@@ -7,7 +7,9 @@ import os
 import tkinter as tk
 from tkinter import *
 from tkinter.ttk import *
-from tkinter import filedialog
+from tkinter import filedialog, scrolledtext
+
+log_path = r".//diff_logs.log"
 
 class WinGUI(Tk):
 
@@ -103,8 +105,8 @@ class WinGUI(Tk):
 
 
 
-        btn_look = Button(self.frame_left2, text="查看")
-        btn_look.pack(side=BOTTOM,fill=NONE)
+        btn_detailed = Button(self.frame_left2, text="查看",command=self.but_detailed)
+        btn_detailed.pack(side=BOTTOM,fill=NONE)
 
 
 
@@ -130,7 +132,7 @@ class WinGUI(Tk):
             self.treev_con.pack(fill=BOTH, expand=True)
         v_ipt_log = self.ipt_logs.get()
         v_ipt_dml = self.ipt_dml.get()
-        logs_all_ls = []
+        self.logs_all_ls = []
         data =[]
         if os.path.isdir(v_ipt_log) and os.path.isdir(v_ipt_dml):
             # log日志数据提取
@@ -138,7 +140,7 @@ class WinGUI(Tk):
             for log_file_path in log_file_paths:
                 log_sql_lists = self.readsql_from_file(log_file_path)
                 for log_sql_list in log_sql_lists:
-                    logs_all_ls.append(log_sql_list)
+                    self.logs_all_ls.append(log_sql_list)
         else:
             tk.messagebox.askokcancel("提示", " log路径输入有误,这不是文件夹! ")
 
@@ -153,9 +155,9 @@ class WinGUI(Tk):
                 # list_tmp.append(str(len(sql_list)))
                 count=0
                 for dml_sql in sql_list:
-                    if dml_sql not in logs_all_ls:
+                    if dml_sql not in self.logs_all_ls:
                         count += 1
-                        print(dml_sql)
+                        # print(dml_sql)
                 list_tmp.append(count)
                 data.append(list_tmp)
 
@@ -221,6 +223,57 @@ class WinGUI(Tk):
             print("ERROR,sql文件%s，内容转化失败，失败信息%s" % (file_path, str(ex)))
             tk.messagebox.askokcancel("提示", " DML路径输入有误,这不是文件夹! ")
             return None
+
+    def but_detailed(self):
+        v_ipt_log = self.ipt_logs.get()
+        item = self.treev_con.selection()[0]
+        tup_detailed = self.treev_con.item(item, "values")
+        tup_fname = tup_detailed[0]
+        tup_fdir = tup_detailed[1]
+        dml_detailed_ls = self.readsql_from_file(tup_fdir)
+        open(log_path, 'w').close()
+        diff_sql_w = open(log_path, 'a+', encoding='utf-8')
+        for dml_detailed in dml_detailed_ls:
+            if dml_detailed not in self.logs_all_ls:
+                diff_sql_w.write(dml_detailed+"\n\n")
+        diff_sql_w.close()
+        diff_sql = open(log_path, 'r', encoding='utf-8')
+        # tk.messagebox.askokcancel("异常sql", diff_sql.read())
+        diff_sql.close()
+
+        parent = None
+        d_btns = {}
+        dialog = MyDialog(parent,d_btns)
+
+class MyDialog(Toplevel):
+    def __init__(self, parent, d_btns={}, title='My Dialog'):
+        Toplevel.__init__(self, parent)
+
+        self.parent = parent
+        self.name = title
+        self.text_area = None
+        self.btns = []
+        self.text_size = (60, 20)
+        self.btn_size = (16, 1)
+        self.transient(parent)  # 去掉最大最小化按钮
+        self.title(title)
+        self.protocol("WM_DELETE_WINDOW")
+        if not d_btns:
+            d_btns = {'OK': self.ok}
+        self.init_input_box(d_btns)
+
+    def ok(self):
+        print('ok')
+        self.cancel()
+
+    def init_input_box(self, d_btns):
+        w, h = self.text_size
+        # 初始化文本框
+        if self.text_area: self.text_area.destroy()
+        self.text_area = scrolledtext.ScrolledText(self, width=w, height=h)
+        self.text_area.grid(row=0, column=0, columnspan=len(d_btns), padx=10, pady=5)
+        self.text_area.focus()
+        self.text_area.insert('end',"xxx")
 
 
 if __name__ == "__main__":
