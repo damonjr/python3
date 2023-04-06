@@ -1,12 +1,10 @@
 """
-本代码由[Tkinter布局助手]生成
-当前版本:3.1.2
-官网:https://www.pytk.net/tkinter-helper
-QQ交流群:788392508
+Autho:SGL
+Version:1.0
+QQ交流群:790655549
 """
 import os
 import tkinter as tk
-import tkinter.ttk as ttk
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import filedialog
@@ -15,8 +13,8 @@ class WinGUI(Tk):
 
     def __init__(self):
         super().__init__()
-        self.title("Tkinter布局助手")
-        self.geometry("600x500")
+        self.title("DML检查")
+        self.geometry("800x500")
 
         self.select_path_dml = StringVar()
         self.select_path_logs = StringVar()
@@ -70,6 +68,30 @@ class WinGUI(Tk):
         # self.tk_button_but_logs = self.__tk_button_but_logs(frame_left)
         btn_logs = Button(frame_left, text="打开",command=self.select_folder_logs)
         btn_logs.grid(column=3, row=1, padx=(5, 5), sticky=NSEW)
+
+        '''内容'''
+        # 内容
+        self.treev_con = Treeview(self.frame_left2,columns=("dir","file_name","sql_con","diff_sql_count"),show='headings',height=2)
+
+        # 滚动条
+        yscrollbar = Scrollbar(self.frame_left2)
+        yscrollbar.pack(side=RIGHT, fill=Y)
+        # tree.configure(yscrollcommand=yscrollbar.set)
+        yscrollbar.config(command=self.treev_con.yview)
+        self.treev_con.configure(yscrollcommand=yscrollbar.set)  # 经过试验，以上两行代码交换顺序后无影响
+
+        self.treev_con.heading("file_name", text="文件名")
+        self.treev_con.heading("dir", text="地址")  # 图标栏
+        self.treev_con.heading("sql_con", text="sql数量")
+        self.treev_con.heading("diff_sql_count", text="差异数")
+
+        self.treev_con.column("file_name", anchor=W)
+        self.treev_con.column("dir",anchor=W)
+        self.treev_con.column("sql_con", anchor=W)
+        self.treev_con.column("diff_sql_count", anchor=W)
+
+        self.treev_con.pack(fill=BOTH,expand = True)
+
         """按钮组"""
         # self.tk_button_but_open = self.__tk_button_but_open(frame_left)
         btn_check = Button(frame_left, text="检测",command=self.check_but)
@@ -78,19 +100,8 @@ class WinGUI(Tk):
         # self.tk_button_but_cle = self.__tk_button_but_cle(frame_left)
         btn_reset = Button(frame_left, text="重置",command=self.but_reset)
         btn_reset.grid(column=2, row=2, padx=(5, 5), pady=(10, 10), ipady=8)
-        '''内容'''
-        # 内容
-        self.treev_con = Treeview(self.frame_left2,columns=("dir","file_name","sql_con"),show='headings',height=2)
 
-        self.treev_con.heading("file_name", text="文件名")
-        self.treev_con.heading("dir", text="地址")  # 图标栏
-        self.treev_con.heading("sql_con", text="sql数量")
 
-        self.treev_con.column("file_name", anchor=W)
-        self.treev_con.column("dir",anchor=W)
-        self.treev_con.column("sql_con", anchor=W)
-
-        self.treev_con.pack(fill=BOTH,expand = True)
 
         btn_look = Button(self.frame_left2, text="查看")
         btn_look.pack(side=BOTTOM,fill=NONE)
@@ -109,48 +120,72 @@ class WinGUI(Tk):
     def but_reset(self):
         self.select_path_dml.set("")
         self.select_path_logs.set("")
+        for child in self.treev_con.get_children():
+            self.treev_con.delete(child)
+            self.treev_con.pack(fill=BOTH, expand=True)
 
     def check_but(self):
+        for child in self.treev_con.get_children():
+            self.treev_con.delete(child)
+            self.treev_con.pack(fill=BOTH, expand=True)
         v_ipt_log = self.ipt_logs.get()
         v_ipt_dml = self.ipt_dml.get()
+        logs_all_ls = []
+        data =[]
         if os.path.isdir(v_ipt_log) and os.path.isdir(v_ipt_dml):
-            data = self._dir_or_file(v_ipt_dml)
-            # data = {"文件名":ls_dir_dml[1],"路径":ls_dir_dml[0]}
-            # print(ls_dir_dml[1])
-            # # print(type(len(data)))
+            # log日志数据提取
+            log_file_paths = self._dir_or_file(v_ipt_log)
+            for log_file_path in log_file_paths:
+                log_sql_lists = self.readsql_from_file(log_file_path)
+                for log_sql_list in log_sql_lists:
+                    logs_all_ls.append(log_sql_list)
+        else:
+            tk.messagebox.askokcancel("提示", " log路径输入有误,这不是文件夹! ")
+
+        if os.path.isdir(v_ipt_dml):
+            dml_file_paths = self._dir_or_file(v_ipt_dml)
+            for file_path in dml_file_paths:
+                sql_list = self.readsql_from_file(file_path)
+                list_tmp = []
+                list_tmp.append(os.path.basename(file_path)) # 文件名
+                list_tmp.append(file_path)
+                list_tmp.append(len(sql_list))
+                # list_tmp.append(str(len(sql_list)))
+                count=0
+                for dml_sql in sql_list:
+                    if dml_sql not in logs_all_ls:
+                        count += 1
+                        print(dml_sql)
+                list_tmp.append(count)
+                data.append(list_tmp)
+
+
             for i_data in range(len(data)):
                 self.treev_con.insert("", index=END, text="文件名", values=(data[i_data]))
 
             self.treev_con.pack(fill=BOTH)
-
         else:
             # message = "输入有误,这不是文件夹"
-            tk.messagebox.askokcancel("提示", " 输入有误,这不是文件夹! ")
+            tk.messagebox.askokcancel("提示", " DML路径输入有误,这不是文件夹! ")
             # self.but_reset()
 
 
     def  _dir_or_file(self,fpath):
         """判断参数是文件还是路径，路径的话遍历路径经将文件路径记录到列表"""
-        file_sql_info_ls = []
+        file_paths = []
         for dirpath, dirnames, filenames in os.walk(fpath):
             for filename in filenames:
                 file_path = os.path.join(dirpath, filename)
-                # file_paths.append(file_path)
+                file_paths.append(file_path)
                 # file_name_ls.append(filename)
 
-                sql_list = self.readsql_from_file(file_path)
-                list_tmp = []
-                list_tmp.append(filename)
-                list_tmp.append(file_path)
-                list_tmp.append(len(sql_list))
-                # list_tmp.append(str(len(sql_list)))
-                file_sql_info_ls.append(list_tmp)
-        return file_sql_info_ls
+
+        return file_paths
 
     def readsql_from_file(self,file_path):
         try:
             print("sql文件%s，开始内容转化" % (file_path))
-            fp = open(file_path, 'r', encoding='utf-8')
+            fp = open(file_path, 'r', encoding='UTF-8-sig')
             sql_str = fp.readlines()
             # results_list = sql_str.split(";")
             results, results_list = [], []
@@ -179,10 +214,12 @@ class WinGUI(Tk):
                     i = i.strip()
                     i = i[::-1].replace(";", "", 1)[::-1]
                     res_sql_list.append(i)
-            print("sql文件%s，内容转化成功，转化待执行sql共%s条" % (file_path, str(len(res_sql_list))))
+            # print("sql文件%s，内容转化成功，转化待执行sql共%s条" % (file_path, str(len(res_sql_list))))
+            # print(res_sql_list)
             return res_sql_list
         except Exception as ex:
             print("ERROR,sql文件%s，内容转化失败，失败信息%s" % (file_path, str(ex)))
+            tk.messagebox.askokcancel("提示", " DML路径输入有误,这不是文件夹! ")
             return None
 
 
