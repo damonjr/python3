@@ -37,7 +37,7 @@ class WinGUI(Tk):
         self.frame_left2 = LabelFrame(self, text="内容")
         # 使用 place 控制 LabelFrame 的位置
         # frame_left2.place(relx=0, rely=0, relwidth=1)
-        self.frame_left2.pack(side=TOP, fill=BOTH)
+        self.frame_left2.pack(side=TOP, fill=BOTH,expand = True)
 
 
         '''第一组'''
@@ -82,16 +82,18 @@ class WinGUI(Tk):
         # 内容
         self.treev_con = Treeview(self.frame_left2,columns=("dir","file_name","sql_con"),show='headings',height=2)
 
-        self.treev_con.heading("dir", text="地址")  # 图标栏
         self.treev_con.heading("file_name", text="文件名")
+        self.treev_con.heading("dir", text="地址")  # 图标栏
         self.treev_con.heading("sql_con", text="sql数量")
 
-        self.treev_con.column("dir",anchor=CENTER)
-        self.treev_con.column("file_name", anchor=CENTER)
-        self.treev_con.column("sql_con", anchor=CENTER)
+        self.treev_con.column("file_name", anchor=W)
+        self.treev_con.column("dir",anchor=W)
+        self.treev_con.column("sql_con", anchor=W)
 
-        self.treev_con.tag_configure("evenColor", background="lightblue")  # 设置标签
-        self.treev_con.pack(fill=BOTH)
+        self.treev_con.pack(fill=BOTH,expand = True)
+
+        btn_look = Button(self.frame_left2, text="查看")
+        btn_look.pack(side=BOTTOM,fill=NONE)
 
 
 
@@ -116,15 +118,8 @@ class WinGUI(Tk):
             # data = {"文件名":ls_dir_dml[1],"路径":ls_dir_dml[0]}
             # print(ls_dir_dml[1])
             # # print(type(len(data)))
-            rowCount = 1
             for i_data in range(len(data)):
-                if (rowCount % 2 == 1):
-                    self.treev_con.insert("", index=END, text="文件名", values=(data[i_data]))
-                    # print((ls_dir_dml[1])[i_data])
-                else:
-                    self.treev_con.insert("", index=END, text="文件名", values=(data[i_data]),tags=("evenColor"))  # 建立浅蓝色底
-                    # print((ls_dir_dml[1])[i_data])
-                rowCount += 1  # 行号数加1
+                self.treev_con.insert("", index=END, text="文件名", values=(data[i_data]))
 
             self.treev_con.pack(fill=BOTH)
 
@@ -142,15 +137,17 @@ class WinGUI(Tk):
                 file_path = os.path.join(dirpath, filename)
                 # file_paths.append(file_path)
                 # file_name_ls.append(filename)
+
+                sql_list = self.readsql_from_file(file_path)
                 list_tmp = []
-                sql_list = self.readsql_from_file(self, file_path, filename)
                 list_tmp.append(filename)
                 list_tmp.append(file_path)
-                list_tmp.append(str(len(sql_list)))
+                list_tmp.append(len(sql_list))
+                # list_tmp.append(str(len(sql_list)))
                 file_sql_info_ls.append(list_tmp)
         return file_sql_info_ls
 
-    def readsql_from_file(self, file_path, filename):
+    def readsql_from_file(self,file_path):
         try:
             print("sql文件%s，开始内容转化" % (file_path))
             fp = open(file_path, 'r', encoding='utf-8')
@@ -187,10 +184,6 @@ class WinGUI(Tk):
         except Exception as ex:
             print("ERROR,sql文件%s，内容转化失败，失败信息%s" % (file_path, str(ex)))
             return None
-
-
-
-
 
 
 if __name__ == "__main__":
