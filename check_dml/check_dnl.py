@@ -239,41 +239,20 @@ class WinGUI(Tk):
         diff_sql_w.close()
         diff_sql = open(log_path, 'r', encoding='utf-8')
         # tk.messagebox.askokcancel("异常sql", diff_sql.read())
+        self.init_input_box(diff_sql.read())
         diff_sql.close()
 
-        parent = None
-        d_btns = {}
-        dialog = MyDialog(parent,d_btns)
 
-class MyDialog(Toplevel):
-    def __init__(self, parent, d_btns={}, title='My Dialog'):
-        Toplevel.__init__(self, parent)
 
-        self.parent = parent
-        self.name = title
-        self.text_area = None
-        self.btns = []
-        self.text_size = (60, 20)
-        self.btn_size = (16, 1)
-        self.transient(parent)  # 去掉最大最小化按钮
-        self.title(title)
-        self.protocol("WM_DELETE_WINDOW")
-        if not d_btns:
-            d_btns = {'OK': self.ok}
-        self.init_input_box(d_btns)
-
-    def ok(self):
-        print('ok')
-        self.cancel()
-
-    def init_input_box(self, d_btns):
-        w, h = self.text_size
+    def init_input_box(self, d_sql):
+        top = tk.Toplevel()
+        top.title("Python")
         # 初始化文本框
-        if self.text_area: self.text_area.destroy()
-        self.text_area = scrolledtext.ScrolledText(self, width=w, height=h)
-        self.text_area.grid(row=0, column=0, columnspan=len(d_btns), padx=10, pady=5)
+        self.text_area = scrolledtext.ScrolledText(top, width=60, height=20)
+        self.text_area.grid(row=0, column=0,  padx=10, pady=5)
         self.text_area.focus()
-        self.text_area.insert('end',"xxx")
+        self.text_area.insert('end', d_sql)
+
 
 
 if __name__ == "__main__":
