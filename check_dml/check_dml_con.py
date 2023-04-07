@@ -1,3 +1,6 @@
+import os
+
+
 def readsql_from_file(sqlfile_path):
     try:
         print("sql文件%s，开始内容转化" % (sqlfile_path))
@@ -36,9 +39,17 @@ def readsql_from_file(sqlfile_path):
         print("ERROR,sql文件%s，内容转化失败，失败信息%s" % (sqlfile_path, str(ex)))
         return None
 if __name__ == "__main__":
-    sql_list = readsql_from_file(r'E:\NAS\SynologyDrive\ChinaTelecom\工作记录\03\0316\MBDM1.1.0_1_20230222\程序包\脚本\DML\crm_cfguse\01_MBDM1.1.0_1_20230222_DML_crm_cfguse_龙耀图_新增1_增加字典值_20230215_2023-02-15.sql')
-    for sql_str in range(len(sql_list)):
-        print("第%s条SQL"%(str(sql_str)),sql_list[sql_str])
+    # sql_list = readsql_from_file(r'E:/NAS/SynologyDrive/ChinaTelecom/工作记录/03/0316/MBDM1.1.0_1_20230222/程序包/脚本/DML/mbdm_conf\02_MBDM1.1.0_1_20230222_DML_mbdm_conf_钟家铖_增量1_活动结果统计数据入库定时任务_20230221.sql')
+    fpath = ('E:/NAS/SynologyDrive/ChinaTelecom/工作记录/03/0316/MBDM1.1.0_1_20230222/程序包/脚本/DML/mbdm_conf')
+    for dirpath, dirnames, filenames in os.walk(fpath):
+        for filename in filenames:
+            file_path = os.path.join(dirpath, filename)
+            # file_paths.append(file_path)
+            # file_name_ls.append(filename)
+
+            sql_list = readsql_from_file(file_path)
+        for sql_str in range(len(sql_list)):
+            print("第%s条SQL"%(str(sql_str)),sql_list[sql_str])
 
 
 
