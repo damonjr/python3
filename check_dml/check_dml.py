@@ -27,51 +27,40 @@ class WinGUI(Tk):
         # 定义第一个容器，使用 labelanchor ='w' 来设置标题的方位
         frame_left = LabelFrame(self, text="请选择")
         # 使用 place 控制 LabelFrame 的位置
-        # frame_left.place(relx=0, rely=0, relwidth=1)
         frame_left.pack(side=TOP,fill=X)
 
         frame_left.grid_columnconfigure(0,weight=2)
         frame_left.grid_rowconfigure(0,weight=1)
-        # frame_left.grid_columnconfigure(1, weight=1)
         frame_left.grid_rowconfigure(1, weight=1)
         frame_left.grid_columnconfigure(2, weight=2)
         frame_left.grid_rowconfigure(2, weight=1)
-        # frame_left.grid_columnconfigure(3, weight=1)
         frame_left.grid_rowconfigure(3, weight=1)
         self.frame_left2 = LabelFrame(self, text="内容")
         # 使用 place 控制 LabelFrame 的位置
-        # frame_left2.place(relx=0, rely=0, relwidth=1)
         self.frame_left2.pack(side=TOP, fill=BOTH,expand = True)
 
-
         '''第一组'''
-        # self.tk_label_la_dml = self.__tk_label_la_dml(frame_left)
         # DML提示
         label_dml = Label(frame_left, text="请打开DML文件目录:", anchor="sw")
         label_dml.grid(column=0, row=0, padx=(30, 0), pady=(20, 0), ipady=5, sticky=NSEW)
 
-        # self.tk_input_inp_dml = self.__tk_input_inp_dml(frame_left)
         # DML文本框
         self.ipt_dml = Entry(frame_left , textvariable = self.select_path_dml)
         # ipt.place( y=60, relx=0.2, height=24)
         self.ipt_dml.grid(column=0, row=1, padx=(30, 10), sticky=NSEW)
 
-        # self.tk_button_but_dml = self.__tk_button_but_dml(frame_left)
         # DML按钮
         btn_dml = Button(frame_left, text="打开",command=self.select_folder_dml)
         btn_dml.grid(column=1, row=1, padx=(5, 5), sticky=NSEW)
 
         '''第二组'''
-        # self.tk_label_la_logs = self.__tk_label_la_logs(frame_left)
         # logs提示
         label_logs = Label(frame_left, text="请打开Logs日志文件目录:", anchor="sw")
         label_logs.grid(column=2, row=0, padx=(30, 0), pady=(20, 0), ipady=5, sticky=NSEW)
         # logs输入框
-        # self.tk_input_inp_logs = self.__tk_input_inp_logs(frame_left)
         self.ipt_logs = Entry(frame_left , textvariable = self.select_path_logs)
         self.ipt_logs.grid(column=2, row=1, padx=(30, 10), sticky=NSEW)
         # logs按钮
-        # self.tk_button_but_logs = self.__tk_button_but_logs(frame_left)
         btn_logs = Button(frame_left, text="打开",command=self.select_folder_logs)
         btn_logs.grid(column=3, row=1, padx=(5, 5), sticky=NSEW)
 
@@ -99,11 +88,9 @@ class WinGUI(Tk):
         self.treev_con.pack(fill=BOTH,expand = True)
 
         """按钮组"""
-        # self.tk_button_but_open = self.__tk_button_but_open(frame_left)
         btn_check = Button(frame_left, text="检测",command=self.check_but)
         btn_check.grid(column=0, row=2, padx=(5, 5), pady=(10, 10), ipady=8)
 
-        # self.tk_button_but_cle = self.__tk_button_but_cle(frame_left)
         btn_reset = Button(frame_left, text="重置",command=self.but_reset)
         btn_reset.grid(column=2, row=2, padx=(5, 5), pady=(10, 10), ipady=8)
 
@@ -183,7 +170,6 @@ class WinGUI(Tk):
         else:
             # message = "输入有误,这不是文件夹"
             tk.messagebox.askokcancel("提示", " DML路径输入有误,这不是文件夹! ")
-            # self.but_reset()
 
 
     def  _dir_or_file(self,fpath):
@@ -201,49 +187,12 @@ class WinGUI(Tk):
     def readsql_from_file(self,file_path):
         try:
             print("sql文件%s，开始内容转化" % (file_path))
-            # fp = open(file_path, 'r', encoding='UTF-8-sig')
-            # sql_str = fp.readlines()
-            # # results_list = sql_str.split(";")
-            # results, results_list = [], []
-            # ##去除\n\r
-            # if sql_str[-1].endswith(";"):
-            #     sql_str[-1] = sql_str[-1] + "\n"
-            # for sql in sql_str:
-            #     if sql.startswith("\n") or sql == "\r":
-            #         continue
-            #     if sql.startswith("--"):
-            #         continue
-            #     if not sql.startswith("--") and not sql.endswith("--"):
-            #         if not sql.startswith("/*"):
-            #             results.append(sql)
-            #
-            # trmp_res_sql_list, res_sql_list = [], []
-            # while len(results) > 0:
-            #     for i in range(len(results)):
-            #         if results[i].endswith(";\n"):
-            #             tem_str = "".join(results[:i + 1])
-            #             trmp_res_sql_list.append(tem_str)
-            #             del results[:i + 1]
-            #             break
-            # for i in trmp_res_sql_list:
-            #     if i.endswith(";\n"):
-            #         i = i.strip()
-            #         i = i[::-1].replace(";", "", 1)[::-1]
-            #         res_sql_list.append(i)
-
-
-            # print("sql文件%s，内容转化成功，转化待执行sql共%s条" % (file_path, str(len(res_sql_list))))
-            # print(res_sql_list)
-
             res_sql_list = []
             # 读取文件
             with open(file_path, 'rb') as f:
                 # 检测文件编码
                 result = chardet.detect(f.read())
-                # # 重置文件指针
-                # f.seek(0)
-                # # 根据检测结果读取文件
-                # content = f.read().decode(result['encoding'])
+
             for line in codecs.open(file_path, 'r', encoding=result['encoding']):
                 if re.match('^insert|update|delete|\s*insert|\s*update|\*sdelete(.*?);', line, re.I|re.S):
                     # print(line)
@@ -264,14 +213,6 @@ class WinGUI(Tk):
         tup_detailed = self.treev_con.item(item, "values")
         tup_fname = str(tup_detailed[0])
         tup_fname = tup_fname[:-4] + ".log"
-        # tup_fdir = tup_detailed[1]
-        # dml_detailed_ls = self.readsql_from_file(tup_fdir)
-        # open(log_path, 'w').close()
-        # diff_sql_w = open(log_path, 'a+', encoding='utf-8')
-        # for dml_detailed in dml_detailed_ls:
-        #     if dml_detailed not in self.logs_all_ls:
-        #         diff_sql_w.write(dml_detailed+"\n\n")
-        # diff_sql_w.close()
         diff_sql = open(tup_fname, 'r', encoding='utf-8')
         # tk.messagebox.askokcancel("异常sql", diff_sql.read())
         self.init_input_box(diff_sql.read())
@@ -285,7 +226,6 @@ class WinGUI(Tk):
         # 初始化文本框
         self.text_area = scrolledtext.ScrolledText(top, width=60, height=20)
         self.text_area.pack(fill=BOTH, expand=True)
-        # self.text_area.grid(row=0, column=0,  padx=10, pady=5)
         self.text_area.focus()
         self.text_area.insert('end', d_sql)
 
