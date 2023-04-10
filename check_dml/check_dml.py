@@ -3,11 +3,15 @@ Autho:SGL
 Version:1.0
 QQ交流群:790655549
 """
+import codecs
 import os
+import re
 import tkinter as tk
+import chardet
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import filedialog, scrolledtext
+
 
 log_path = r".//diff_logs.log"
 
@@ -127,14 +131,17 @@ class WinGUI(Tk):
             self.treev_con.pack(fill=BOTH, expand=True)
 
     def check_but(self):
-        for child in self.treev_con.get_children():
-            self.treev_con.delete(child)
-            self.treev_con.pack(fill=BOTH, expand=True)
+        # for child in self.treev_con.get_children():
+        #     self.treev_con.delete(child)
+        #     self.treev_con.pack(fill=BOTH, expand=True)
+        # chatgpt
+        self.treev_con.delete(*self.treev_con.get_children())
+
         v_ipt_log = self.ipt_logs.get()
         v_ipt_dml = self.ipt_dml.get()
         self.logs_all_ls = []
         data =[]
-        if os.path.isdir(v_ipt_log) and os.path.isdir(v_ipt_dml):
+        if os.path.isdir(v_ipt_log):
             # log日志数据提取
             log_file_paths = self._dir_or_file(v_ipt_log)
             for log_file_path in log_file_paths:
@@ -153,11 +160,18 @@ class WinGUI(Tk):
                 list_tmp.append(file_path)
                 list_tmp.append(len(sql_list))
                 # list_tmp.append(str(len(sql_list)))
+
+                sql_name = str(os.path.basename(file_path))
+                sql_name = sql_name[:-4] + ".log"
+                file = open(sql_name,"w",encoding="utf-8")
+
                 count=0
                 for dml_sql in sql_list:
                     if dml_sql not in self.logs_all_ls:
                         count += 1
                         # print(dml_sql)
+                        file.write(dml_sql)
+                file.close()
                 list_tmp.append(count)
                 data.append(list_tmp)
 
@@ -187,57 +201,78 @@ class WinGUI(Tk):
     def readsql_from_file(self,file_path):
         try:
             print("sql文件%s，开始内容转化" % (file_path))
-            fp = open(file_path, 'r', encoding='UTF-8-sig')
-            sql_str = fp.readlines()
-            # results_list = sql_str.split(";")
-            results, results_list = [], []
-            ##去除\n\r
-            if sql_str[-1].endswith(";"):
-                sql_str[-1] = sql_str[-1] + "\n"
-            for sql in sql_str:
-                if sql.startswith("\n") or sql == "\r":
-                    continue
-                if sql.startswith("--"):
-                    continue
-                if not sql.startswith("--") and not sql.endswith("--"):
-                    if not sql.startswith("/*"):
-                        results.append(sql)
+            # fp = open(file_path, 'r', encoding='UTF-8-sig')
+            # sql_str = fp.readlines()
+            # # results_list = sql_str.split(";")
+            # results, results_list = [], []
+            # ##去除\n\r
+            # if sql_str[-1].endswith(";"):
+            #     sql_str[-1] = sql_str[-1] + "\n"
+            # for sql in sql_str:
+            #     if sql.startswith("\n") or sql == "\r":
+            #         continue
+            #     if sql.startswith("--"):
+            #         continue
+            #     if not sql.startswith("--") and not sql.endswith("--"):
+            #         if not sql.startswith("/*"):
+            #             results.append(sql)
+            #
+            # trmp_res_sql_list, res_sql_list = [], []
+            # while len(results) > 0:
+            #     for i in range(len(results)):
+            #         if results[i].endswith(";\n"):
+            #             tem_str = "".join(results[:i + 1])
+            #             trmp_res_sql_list.append(tem_str)
+            #             del results[:i + 1]
+            #             break
+            # for i in trmp_res_sql_list:
+            #     if i.endswith(";\n"):
+            #         i = i.strip()
+            #         i = i[::-1].replace(";", "", 1)[::-1]
+            #         res_sql_list.append(i)
 
-            trmp_res_sql_list, res_sql_list = [], []
-            while len(results) > 0:
-                for i in range(len(results)):
-                    if results[i].endswith(";\n"):
-                        tem_str = "".join(results[:i + 1])
-                        trmp_res_sql_list.append(tem_str)
-                        del results[:i + 1]
-                        break
-            for i in trmp_res_sql_list:
-                if i.endswith(";\n"):
-                    i = i.strip()
-                    i = i[::-1].replace(";", "", 1)[::-1]
-                    res_sql_list.append(i)
+
             # print("sql文件%s，内容转化成功，转化待执行sql共%s条" % (file_path, str(len(res_sql_list))))
             # print(res_sql_list)
+
+            res_sql_list = []
+            # 读取文件
+            with open(file_path, 'rb') as f:
+                # 检测文件编码
+                result = chardet.detect(f.read())
+                # # 重置文件指针
+                # f.seek(0)
+                # # 根据检测结果读取文件
+                # content = f.read().decode(result['encoding'])
+            for line in codecs.open(file_path, 'r', encoding=result['encoding']):
+                if re.match('^insert|update|delete|\s*insert|\s*update|\*sdelete(.*?);', line, re.I|re.S):
+                    # print(line)
+                    res_sql_list.append(line)
+                elif re.match('^\[SQL\]insert|\[SQL\]update|\[SQL\]delete.*;', line, re.I | re.S):
+                    res_sql_list.append(line)
+            f.close()
+
             return res_sql_list
         except Exception as ex:
             print("ERROR,sql文件%s，内容转化失败，失败信息%s" % (file_path, str(ex)))
-            tk.messagebox.askokcancel("提示", " DML路径输入有误,这不是文件夹! ")
+            tk.messagebox.askokcancel("提示", "ERROR,sql文件%s，内容转化失败，失败信息%s" % (file_path, str(ex)))
             return None
 
     def but_detailed(self):
         v_ipt_log = self.ipt_logs.get()
         item = self.treev_con.selection()[0]
         tup_detailed = self.treev_con.item(item, "values")
-        tup_fname = tup_detailed[0]
-        tup_fdir = tup_detailed[1]
-        dml_detailed_ls = self.readsql_from_file(tup_fdir)
-        open(log_path, 'w').close()
-        diff_sql_w = open(log_path, 'a+', encoding='utf-8')
-        for dml_detailed in dml_detailed_ls:
-            if dml_detailed not in self.logs_all_ls:
-                diff_sql_w.write(dml_detailed+"\n\n")
-        diff_sql_w.close()
-        diff_sql = open(log_path, 'r', encoding='utf-8')
+        tup_fname = str(tup_detailed[0])
+        tup_fname = tup_fname[:-4] + ".log"
+        # tup_fdir = tup_detailed[1]
+        # dml_detailed_ls = self.readsql_from_file(tup_fdir)
+        # open(log_path, 'w').close()
+        # diff_sql_w = open(log_path, 'a+', encoding='utf-8')
+        # for dml_detailed in dml_detailed_ls:
+        #     if dml_detailed not in self.logs_all_ls:
+        #         diff_sql_w.write(dml_detailed+"\n\n")
+        # diff_sql_w.close()
+        diff_sql = open(tup_fname, 'r', encoding='utf-8')
         # tk.messagebox.askokcancel("异常sql", diff_sql.read())
         self.init_input_box(diff_sql.read())
         diff_sql.close()
@@ -249,7 +284,8 @@ class WinGUI(Tk):
         top.title("Python")
         # 初始化文本框
         self.text_area = scrolledtext.ScrolledText(top, width=60, height=20)
-        self.text_area.grid(row=0, column=0,  padx=10, pady=5)
+        self.text_area.pack(fill=BOTH, expand=True)
+        # self.text_area.grid(row=0, column=0,  padx=10, pady=5)
         self.text_area.focus()
         self.text_area.insert('end', d_sql)
 
