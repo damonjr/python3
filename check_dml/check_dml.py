@@ -14,7 +14,10 @@ from tkinter.ttk import *
 from tkinter import filedialog, scrolledtext
 
 
-log_path = r".//diff_logs.log"
+# log_path = r".//logs//diff_logs.log"
+logs_path = r".//logs//"
+if not os.path.exists(logs_path):
+    os.mkdir(logs_path)
 
 class WinGUI(Tk):
 
@@ -119,6 +122,8 @@ class WinGUI(Tk):
             self.treev_con.pack(fill=BOTH, expand=True)
 
     def check_but(self):
+        if not os.path.exists(logs_path):
+            os.mkdir(logs_path)
         # for child in self.treev_con.get_children():
         #     self.treev_con.delete(child)
         #     self.treev_con.pack(fill=BOTH, expand=True)
@@ -167,7 +172,7 @@ class WinGUI(Tk):
                 # list_tmp.append(str(len(sql_list)))
 
                 sql_name = str(os.path.basename(file_path))
-                sql_name = sql_name[:-4] + ".log"
+                sql_name = logs_path+sql_name[:-4] + ".log"
                 file = open(sql_name,"w",encoding="utf-8")
 
                 count=0
@@ -239,7 +244,7 @@ class WinGUI(Tk):
         item = self.treev_con.selection()[0]
         tup_detailed = self.treev_con.item(item, "values")
         tup_fname = str(tup_detailed[0])
-        tup_fname = tup_fname[:-4] + ".log"
+        tup_fname = logs_path+tup_fname[:-4] + ".log"
         diff_sql = open(tup_fname, 'r', encoding='utf-8')
         # tk.messagebox.askokcancel("异常sql", diff_sql.read())
         self.init_input_box(diff_sql.read())
