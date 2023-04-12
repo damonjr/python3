@@ -7,6 +7,7 @@ import codecs
 import os
 import re
 import tkinter as tk
+import tkinter.ttk
 import chardet
 from tkinter import *
 from tkinter.ttk import *
@@ -124,6 +125,16 @@ class WinGUI(Tk):
         # chatgpt
         self.treev_con.delete(*self.treev_con.get_children())
 
+        top = tk.Toplevel()
+        top.title("正在读取数据")
+        top.geometry('400x20+200+200')
+        self.probro = tk.ttk.Progressbar(top)
+        self.probro.pack(fill=BOTH, expand=True)
+        self.probro['maximum'] = 200
+        probro_con = 10
+        self.probro['value'] = probro_con
+        self.update()
+
         v_ipt_log = self.ipt_logs.get()
         v_ipt_dml = self.ipt_dml.get()
         self.logs_all_ls = []
@@ -135,8 +146,15 @@ class WinGUI(Tk):
                 log_sql_lists = self.readsql_from_file(log_file_path)
                 for log_sql_list in log_sql_lists:
                     self.logs_all_ls.append(log_sql_list)
+                probro_con = probro_con + 1/(len(v_ipt_log))*90
+                self.probro['value'] = probro_con
+                self.update()
         else:
             tk.messagebox.askokcancel("提示", " log路径输入有误,这不是文件夹! ")
+            top.destroy()
+
+        self.probro['value'] = 100
+        self.update()
 
         if os.path.isdir(v_ipt_dml):
             dml_file_paths = self._dir_or_file(v_ipt_dml)
@@ -161,6 +179,10 @@ class WinGUI(Tk):
                 file.close()
                 list_tmp.append(count)
                 data.append(list_tmp)
+                #进度条
+                probro_con = probro_con + 1 / (len(v_ipt_dml)) * 100
+                self.probro['value'] = probro_con
+                self.update()
 
 
             for i_data in range(len(data)):
@@ -170,6 +192,10 @@ class WinGUI(Tk):
         else:
             # message = "输入有误,这不是文件夹"
             tk.messagebox.askokcancel("提示", " DML路径输入有误,这不是文件夹! ")
+            top.destroy()
+        self.probro['value'] = 100
+        self.update()
+        top.destroy()
 
 
     def  _dir_or_file(self,fpath):
@@ -194,10 +220,11 @@ class WinGUI(Tk):
                 result = chardet.detect(f.read())
 
             for line in codecs.open(file_path, 'r', encoding=result['encoding']):
-                if re.match('^insert|update|delete|\s*insert|\s*update|\*sdelete(.*?);', line, re.I|re.S):
+                # if re.match('^insert|^update|^delete|^\s*insert|^\s*update|^\*sdelete(.*?);', line, re.I|re.S):
+                if re.match('^(insert into|update|delete)|^\s*(insert into|update|delete)(.*?);', line, re.I | re.S):
                     # print(line)
                     res_sql_list.append(line)
-                elif re.match('^\[SQL\]insert|\[SQL\]update|\[SQL\]delete.*;', line, re.I | re.S):
+                elif re.match('^(\[SQL\]|SQL\]|QL\]|L\]|\])(insert into|update|delete)(.*?);', line, re.I | re.S):
                     res_sql_list.append(line)
             f.close()
 
@@ -222,7 +249,7 @@ class WinGUI(Tk):
 
     def init_input_box(self, d_sql):
         top = tk.Toplevel()
-        top.title("Python")
+        top.title("查看")
         # 初始化文本框
         self.text_area = scrolledtext.ScrolledText(top, width=60, height=20)
         self.text_area.pack(fill=BOTH, expand=True)
