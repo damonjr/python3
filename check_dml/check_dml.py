@@ -157,7 +157,7 @@ class WinGUI(Tk):
         else:
             tk.messagebox.askokcancel("提示", " log路径输入有误,这不是文件夹! ")
             top.destroy()
-
+        probro_con = 100
         self.probro['value'] = 100
         self.update()
 
@@ -224,13 +224,22 @@ class WinGUI(Tk):
                 # 检测文件编码
                 result = chardet.detect(f.read())
 
-            for line in codecs.open(file_path, 'r', encoding=result['encoding']):
-                # if re.match('^insert|^update|^delete|^\s*insert|^\s*update|^\*sdelete(.*?);', line, re.I|re.S):
-                if re.match('^(insert into|update|delete)|^\s*(insert into|update|delete)(.*?);', line, re.I | re.S):
-                    # print(line)
-                    res_sql_list.append(line)
-                elif re.match('^(\[SQL\]|SQL\]|QL\]|L\]|\])(insert into|update|delete)(.*?);', line, re.I | re.S):
-                    res_sql_list.append(line)
+            # for line in codecs.open(file_path, 'r', encoding=result['encoding']):
+            #     # if re.match('^insert|^update|^delete|^\s*insert|^\s*update|^\*sdelete(.*?);', line, re.I|re.S):
+            #     if re.match('^(insert into|update|delete|\s*insert into|\s*update|\s*delete)(.*?);', line, re.I | re.S):
+            #         # print(line)
+            #         res_sql_list.append(line)
+            #     elif re.match('^(\[SQL\]|SQL\]|QL\]|L\]|\])(insert into|update|delete)(.*?);', line, re.I | re.S):
+            #         res_sql_list.append(line)
+
+            # 定义正则表达式
+            pattern = r'(\bINSERT\b.*?;|\bUPDATE\b.*?;|\bDELETE\b.*?;)'
+            # 读取文件
+            with open(file_path, 'r', encoding=result['encoding']) as f:
+                content = f.read()
+            # 提取DML语句
+            res_sql_list = re.findall(pattern, content, re.IGNORECASE | re.DOTALL)
+
             f.close()
 
             return res_sql_list
